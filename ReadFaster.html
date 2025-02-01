@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Speed Reader</title>
   <style>
+    /* Light Mode (Default) */
     body {
       display: flex;
       justify-content: center;
@@ -13,11 +14,12 @@
       margin: 0;
       background-color: #f0f0f0;
       font-family: Arial, sans-serif;
+      transition: background-color 0.3s, color 0.3s;
     }
     #wordDisplay {
       font-size: 4rem;
       color: #333;
-      transition: opacity 0.2s ease-in-out;
+      transition: color 0.3s;
     }
     #controls {
       position: fixed;
@@ -29,9 +31,48 @@
       font-size: 1.5rem;
       color: #555;
     }
+    #wordSlider {
+      width: 300px;
+      margin-top: 10px;
+    }
+    #wordInfo {
+      font-size: 1rem;
+      color: #555;
+      margin-top: 5px;
+    }
+    #darkModeToggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 10px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    /* Dark Mode */
+    body.dark-mode {
+      background-color: #0A192F; /* Deep blue */
+      color: #FFFFFF; /* White */
+    }
+    body.dark-mode #wordDisplay {
+      color: #FFFFFF; /* White */
+    }
+    body.dark-mode #loading {
+      color: #CCCCCC; /* Light gray */
+    }
+    body.dark-mode #wordInfo {
+      color: #CCCCCC; /* Light gray */
+    }
+    body.dark-mode #darkModeToggle {
+      background-color: #0056b3; /* Darker blue */
+    }
   </style>
 </head>
 <body>
+  <button id="darkModeToggle" onclick="toggleDarkMode()">Dark Mode</button>
   <div id="wordDisplay">Upload a file to start</div>
   <div id="loading">Processing file...</div>
   <div id="controls">
@@ -40,6 +81,10 @@
     <button onclick="pauseReading()">Pause</button>
     <button onclick="resetReading()">Reset</button>
     <input type="range" min="100" max="1000" value="300" onchange="updateSpeed(this.value)" />
+    <div>
+      <input type="range" id="wordSlider" min="0" value="0" oninput="jumpToWord(this.value)" />
+      <div id="wordInfo">Word: 0 / 0</div>
+    </div>
   </div>
 
   <!-- Include pdfjs-dist and epubjs libraries -->
@@ -52,6 +97,17 @@
     let intervalId;
     let speed = 300;
 
+    // Dark Mode Toggle
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+      const darkModeToggle = document.getElementById('darkModeToggle');
+      if (document.body.classList.contains('dark-mode')) {
+        darkModeToggle.innerText = 'Light Mode';
+      } else {
+        darkModeToggle.innerText = 'Dark Mode';
+      }
+    }
+
     async function handleFileUpload() {
       const file = document.getElementById('fileInput').files[0];
       if (!file) return;
@@ -63,10 +119,11 @@
       try {
         const text = await extractText(file);
         words = text.split(/\s+|(?=[.,!?;:])/).filter(Boolean);
+        updateWordSlider();
         resetReading();
       } catch (error) {
         console.error('Error extracting text:', error);
-        document.getElementById('wordDisplay').innerText = 'Error processing file.';
+        document.getElementById('wordDisplay').innerText = 'Error processing file. Please try another file.';
       } finally {
         // Hide loading message
         document.getElementById('loading').style.display = 'none';
@@ -96,15 +153,39 @@
     }
 
     async function extractTextFromEPUB(file) {
-      const book = Epub(file);
-      await book.ready;
-      const spine = await book.loaded.spine;
-      let text = '';
-      for (const item of spine.items) {
-        const content = await item.load(book.load.bind(book));
-        text += content;
-      }
-      return text;
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+          const arrayBuffer = event.target.result;
+          const book = Epub(arrayBuffer);
+
+          book.ready.then(() => {
+            console.log('EPUB file loaded successfully');
+            let text = '';
+
+            book.spine.spineItems.forEach(async (item, index) => {
+              try {
+                const section = await book.load(item.id);
+                const doc = new DOMParser().parseFromString(section, 'text/html');
+                text += doc.body.textContent + ' ';
+                console.log(`Processed section ${index + 1}/${book.spine.spineItems.length}`);
+              } catch (error) {
+                console.error(`Error processing section ${item.id}:`, error);
+              }
+
+              // Resolve after processing all sections
+              if (index === book.spine.spineItems.length - 1) {
+                resolve(text);
+              }
+            });
+          }).catch((error) => {
+            console.error('Error loading EPUB file:', error);
+            reject(error);
+          });
+        };
+        reader.onerror = (error) => reject(error);
+        reader.readAsArrayBuffer(file);
+      });
     }
 
     function startReading() {
@@ -113,6 +194,7 @@
         if (currentIndex < words.length) {
           displayWord(words[currentIndex]);
           currentIndex++;
+          updateWordSlider();
         } else {
           clearInterval(intervalId);
         }
@@ -131,12 +213,27 @@
       currentIndex = 0;
       pauseReading();
       displayWord(words[currentIndex]);
+      updateWordSlider();
     }
 
     function updateSpeed(newSpeed) {
       speed = newSpeed;
       pauseReading();
       startReading();
+    }
+
+    function updateWordSlider() {
+      const wordSlider = document.getElementById('wordSlider');
+      const wordInfo = document.getElementById('wordInfo');
+      wordSlider.max = words.length - 1;
+      wordSlider.value = currentIndex;
+      wordInfo.innerText = `Word: ${currentIndex + 1} / ${words.length}`;
+    }
+
+    function jumpToWord(index) {
+      currentIndex = parseInt(index, 10);
+      displayWord(words[currentIndex]);
+      updateWordSlider();
     }
   </script>
 </body>
