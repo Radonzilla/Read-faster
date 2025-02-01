@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Speed Reader</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f0f0f0;
+      font-family: Arial, sans-serif;
+    }
+    #wordDisplay {
+      font-size: 4rem;
+      color: #333;
+      transition: opacity 0.2s ease-in-out;
+    }
+    #controls {
+      position: fixed;
+      bottom: 20px;
+      text-align: center;
+    }
+    #loading {
+      display: none;
+      font-size: 1.5rem;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div id="wordDisplay">Upload a file to start</div>
+  <div id="loading">Processing file...</div>
+  <div id="controls">
+    <input type="file" id="fileInput" accept=".pdf,.epub" onchange="handleFileUpload()" />
+    <button onclick="startReading()">Start</button>
+    <button onclick="pauseReading()">Pause</button>
+    <button onclick="resetReading()">Reset</button>
+    <input type="range" min="100" max="1000" value="300" onchange="updateSpeed(this.value)" />
+  </div>
+
+  <!-- Include pdfjs-dist and epubjs libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/epubjs/0.3.88/epub.min.js"></script>
+
+  <script>
+    let words = [];
+    let currentIndex = 0;
+    let intervalId;
+    let speed = 300;
+
+    async function handleFileUpload() {
+      const file = document.getElementById('fileInput').files[0];
+      if (!file) return;
+
+      // Show loading message
+      document.getElementById('loading').style.display = 'block';
+      document.getElementById('wordDisplay').innerText = '';
+
+      try {
+        const text = await extractText(file);
+        words = text.split(/\s+|(?=[.,!?;:])/).filter(Boolean);
+        resetReading();
+      } catch (error) {
+        console.error('Error extracting text:', error);
+        document.getElementById('wordDisplay').innerText = 'Error processing file.';
+      } finally {
+        // Hide loading message
+        document.getElementById('loading').style.display = 'none';
+      }
+    }
+
+    async function extractText(file) {
+      if (file.name.endsWith('.pdf')) {
+        return await extractTextFromPDF(file);
+      } else if (file.name.endsWith('.epub')) {
+        return await extractTextFromEPUB(file);
+      } else {
+        throw new Error('Unsupported file format');
+      }
+    }
+
+    async function extractTextFromPDF(file) {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let text = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        text += content.items.map((item) => item.str).join(' ');
+      }
+      return text;
+    }
+
+    async function extractTextFromEPUB(file) {
+      const book = Epub(file);
+      await book.ready;
+      const spine = await book.loaded.spine;
+      let text = '';
+      for (const item of spine.items) {
+        const content = await item.load(book.load.bind(book));
+        text += content;
+      }
+      return text;
+    }
+
+    function startReading() {
+      if (words.length === 0) return;
+      intervalId = setInterval(() => {
+        if (currentIndex < words.length) {
+          displayWord(words[currentIndex]);
+          currentIndex++;
+        } else {
+          clearInterval(intervalId);
+        }
+      }, 60000 / speed);
+    }
+
+    function displayWord(word) {
+      document.getElementById('wordDisplay').innerText = word;
+    }
+
+    function pauseReading() {
+      clearInterval(intervalId);
+    }
+
+    function resetReading() {
+      currentIndex = 0;
+      pauseReading();
+      displayWord(words[currentIndex]);
+    }
+
+    function updateSpeed(newSpeed) {
+      speed = newSpeed;
+      pauseReading();
+      startReading();
+    }
+  </script>
+</body>
+</html>
