@@ -1,29 +1,97 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Speed Reader</title>
-  <link rel="stylesheet" href="style.css"/>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpeedRead Pro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <button id="darkModeToggle" onclick="toggleDarkMode()">Dark Mode</button>
-  <div id="wordDisplay">Upload a file to start</div>
-  <div id="loading">Processing file...</div>
-  <div id="controls">
-    <input type="file" id="fileInput" accept=".pdf,.epub" onchange="handleFileUpload()" />
-    <button onclick="startReading()">Start</button>
-    <button onclick="pauseReading()">Pause</button>
-    <button onclick="resetReading()">Reset</button>
-    <input type="range" min="100" max="1000" value="300" onchange="updateSpeed(this.value)" />
-    <div>
-      <input type="range" id="wordSlider" min="0" value="0" oninput="jumpToWord(this.value)" />
-      <div id="wordInfo">Word: 0 / 0</div>
-    </div>
-  </div>
+    <div class="app-container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-bolt"></i>
+                <h1>SpeedRead Pro</h1>
+            </div>
+            <div class="theme-toggle">
+                <button id="themeToggle" aria-label="Toggle dark/light mode">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </header>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/epubjs/0.3.88/epub.min.js"></script>
-  <script src="script.js"></script>
+        <main>
+            <div class="upload-container" id="uploadContainer">
+                <div class="upload-area" id="dropZone">
+                    <i class="fas fa-file-upload"></i>
+                    <h2>Upload Your Document</h2>
+                    <p>Drag & drop a PDF, EPUB or text file here</p>
+                    <div class="or-divider">
+                        <span>OR</span>
+                    </div>
+                    <label for="fileInput" class="upload-btn">
+                        <i class="fas fa-folder-open"></i> Browse Files
+                    </label>
+                    <input type="file" id="fileInput" accept=".pdf,.epub,.txt" hidden>
+                </div>
+            </div>
+
+            <div class="reader-container" id="readerContainer" style="display: none;">
+                <div class="word-display">
+                    <div class="current-word" id="currentWord">Ready</div>
+                </div>
+
+                <div class="progress-container">
+                    <div class="progress-info">
+                        <span id="wordCounter">Word 0/0</span>
+                        <span id="wpmDisplay">0 WPM</span>
+                    </div>
+                    <input type="range" min="0" max="100" value="0" class="slider" id="progressSlider">
+                </div>
+
+                <div class="controls">
+                    <div class="speed-control">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <input type="range" min="50" max="1000" value="300" class="slider" id="speedSlider">
+                        <span id="speedValue">300 WPM</span>
+                    </div>
+                    
+                    <div class="control-buttons">
+                        <button id="prevBtn" class="control-btn" disabled>
+                            <i class="fas fa-step-backward"></i>
+                        </button>
+                        <button id="playPauseBtn" class="control-btn">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <button id="nextBtn" class="control-btn" disabled>
+                            <i class="fas fa-step-forward"></i>
+                        </button>
+                        <button id="resetBtn" class="control-btn">
+                            <i class="fas fa-undo"></i>
+                        </button>
+                        <button id="closeBtn" class="control-btn">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="file-info" id="fileInfo" style="display: none;">
+                <div class="file-name" id="fileName"></div>
+                <div class="estimated-time" id="estimatedTime"></div>
+            </div>
+        </main>
+
+        <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+            <div class="spinner"></div>
+            <p>Processing your document...</p>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
