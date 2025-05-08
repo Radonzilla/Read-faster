@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Speed Reader</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+  <button id="darkModeToggle" onclick="toggleDarkMode()">Dark Mode</button>
+  <div id="wordDisplay">Upload a file to start</div>
+  <div id="loading">Processing file...</div>
+  <div id="controls">
+    <input type="file" id="fileInput" accept=".pdf,.epub" onchange="handleFileUpload()" />
+    <button onclick="startReading()">Start</button>
+    <button onclick="pauseReading()">Pause</button>
+    <button onclick="resetReading()">Reset</button>
+    <input type="range" min="100" max="1000" value="300" onchange="updateSpeed(this.value)" />
+    <div>
+      <input type="range" id="wordSlider" min="0" value="0" oninput="jumpToWord(this.value)" />
+      <div id="wordInfo">Word: 0 / 0</div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/epubjs/0.3.88/epub.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+/* Light Mode (Default) */
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #f0f0f0;
+    font-family: Arial, sans-serif;
+    transition: background-color 0.3s, color 0.3s;
+  }
+  #wordDisplay {
+    font-size: 4rem;
+    color: #333;
+    transition: color 0.3s;
+  }
+  #controls {
+    position: fixed;
+    bottom: 20px;
+    text-align: center;
+  }
+  #loading {
+    display: none;
+    font-size: 1.5rem;
+    color: #555;
+  }
+  #wordSlider {
+    width: 300px;
+    margin-top: 10px;
+  }
+  #wordInfo {
+    font-size: 1rem;
+    color: #555;
+    margin-top: 5px;
+  }
+  #darkModeToggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 10px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  /* Dark Mode */
+  body.dark-mode {
+    background-color: #0A192F;
+    color: #FFFFFF;
+  }
+  body.dark-mode #wordDisplay {
+    color: #FFFFFF;
+  }
+  body.dark-mode #loading {
+    color: #CCCCCC;
+  }
+  body.dark-mode #wordInfo {
+    color: #CCCCCC;
+  }
+  body.dark-mode #darkModeToggle {
+    background-color: #0056b3;
+  }
+  
